@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>الآلة الحاسبة</title>
+<style>
+*{box-sizing:border-box;font-family:Arial,sans-serif;-webkit-user-select:none;user-select:none;margin:0;padding:0;}
+body{margin:0;background:#000;display:flex;justify-content:center;align-items:center;height:100vh;}
+.app{width:360px;max-width:90vw;background:#111;border-radius:20px;padding:10px;display:flex;flex-direction:column;position:relative;}
+.display{background:#000;color:white;font-size:48px;text-align:right;padding:20px;height:140px;border-radius:10px;overflow:hidden;}
+.subdisplay{color:#aaa;font-size:18px;text-align:right;}
+.menu{position:absolute;top:-40px;right:0;font-size:30px;color:#aaa;cursor:pointer;}
+.updateBtn{position:absolute;top:-40px;left:0;font-size:25px;color:#aaa;cursor:pointer;}
+.menu-content{display:none;position:absolute;top:40px;right:0;background:#222;border-radius:10px;padding:10px;z-index:10;width:220px;}
+.menu-content button, .menu-content select{width:100%;padding:10px;margin:5px 0;border:none;border-radius:10px;background:#555;color:white;cursor:pointer;}
+.buttons, .converterMode{flex:1;display:grid;grid-template-columns:repeat(4,1fr);grid-gap:10px;margin-top:10px;}
+.converterMode{display:none;grid-template-columns:1fr;grid-gap:10px;}
+.converterMode input, .converterMode select, .converterMode button{width:100%;padding:20px;font-size:22px;border:none;border-radius:15px;background:#222;color:white;cursor:pointer;}
+.converterMode button{background:#ff9500;color:white;}
+.btn{background:#222;color:white;font-size:28px;border:none;border-radius:50%;height:70px;display:flex;align-items:center;justify-content:center;}
+.op{background:#ff9500;}
+.gray{background:#333;}
+.wide{grid-column:span 2;border-radius:40px;}
+.lightbody{background:#eee;color:#000;}
+.lightbody .app{background:#ddd;}
+.lightbody .display{background:#fff;color:#000;}
+.lightbody .menu-content,.lightbody .converterMode{background:#eee;}
+.lightbody .btn.gray{background:#bbb;color:#000;}
+.lightbody .btn{background:#ccc;color:#000;}
+.lightbody .op{background:#ff9500;color:#000;}
+.lightbody select,input{background:#ddd;color:#000;}
+@media screen and (min-width:600px){
+  .app{width:400px;}
+  .btn{font-size:32px;height:80px;}
+  .converterMode input, .converterMode select, .converterMode button{font-size:24px;padding:25px;}
+}
+</style>
+</head>
+<body class="darkbody">
+<div class="app">
+
+<div class="menu" onclick="toggleMenu()">⋮</div>
+<div class="updateBtn" onclick="updateRates();">⟳</div>
+
+<div class="display">
+  <div class="subdisplay" id="small">الآلة الحاسبة</div>
+  <div id="screen">0</div>
+</div>
+
+<div class="menu-content" id="menuContent">
+  <button onclick="toggleTheme();closeMenu()">تبديل الثيم</button>
+  <select id="modeSelect" onchange="changeMode();closeMenu()">
+    <option value="calc">آلة حاسبة</option>
+    <option value="conv">محول العملات</option>
+  </select>
+</div>
+
+<!-- أزرار الآلة الحاسبة -->
+<div class="buttons" id="calcButtons">
+  <button class="btn gray" onclick="clearAll()">AC</button>
+  <button class="btn gray" onclick="del()">⌫</button>
+  <button class="btn gray" onclick="press('%')">%</button>
+  <button class="btn op" onclick="press('/')">÷</button>
+
+  <button class="btn" onclick="press('7')">7</button>
+  <button class="btn" onclick="press('8')">8</button>
+  <button class="btn" onclick="press('9')">9</button>
+  <button class="btn op" onclick="press('*')">×</button>
+
+  <button class="btn" onclick="press('4')">4</button>
+  <button class="btn" onclick="press('5')">5</button>
+  <button class="btn" onclick="press('6')">6</button>
+  <button class="btn op" onclick="press('-')">−</button>
+
+  <button class="btn" onclick="press('1')">1</button>
+  <button class="btn" onclick="press('2')">2</button>
+  <button class="btn" onclick="press('3')">3</button>
+  <button class="btn op" onclick="press('+')">+</button>
+
+  <button class="btn wide" onclick="press('0')">0</button>
+  <button class="btn" onclick="press('.')">.</button>
+  <button class="btn op" onclick="calc()">=</button>
+</div>
+
+<!-- وضع محول العملات -->
+<div class="converterMode" id="converterBox">
+  <input type="number" id="amount" placeholder="المبلغ">
+  <select id="from"></select>
+  <select id="to"></select>
+  <button onclick="convert()">تحويل</button>
+</div>
+
+</div>
+
+<script>
+// آلة حاسبة
+let screen=document.getElementById("screen");
+function press(v){ if(screen.innerText=="0") screen.innerText=""; screen.innerText+=v; }
+function clearAll(){screen.innerText="0";}
+function del(){screen.innerText=screen.innerText.slice(0,-1)||"0";}
+function calc(){try{screen.innerText=eval(screen.innerText);}catch{screen.innerText="خطأ";}}
+
+// قائمة الثلاث نقاط
+let menuOpen=false;
+function toggleMenu(){
+  menuOpen=!menuOpen;
+  document.getElementById("menuContent").style.display=menuOpen?"block":"none";
+}
+function closeMenu(){menuOpen=false; document.getElementById("menuContent").style.display="none";}
+
+function toggleTheme(){document.body.classList.toggle("lightbody");}
+
+// تغيير الوضع بين الآلة الحاسبة والمحول
+function changeMode(){
+  let mode=document.getElementById("modeSelect").value;
+  let calcButtons=document.getElementById("calcButtons");
+  let convBox=document.getElementById("converterBox");
+  if(mode=="calc"){
+    calcButtons.style.display="grid";
+    convBox.style.display="none";
+    document.getElementById("small").innerText="الآلة الحاسبة";
+  }else{
+    calcButtons.style.display="none";
+    convBox.style.display="grid";
+    document.getElementById("small").innerText="محول العملات";
+  }
+}
+
+// بيانات العملات الافتراضية (50 عملة)
+let defaultRates=[
+{code:"AED",value:3.67,name:"الدرهم الإماراتي (الإمارات)"},
+{code:"AFN",value:87.9,name:"الأفغاني (أفغانستان)"},
+{code:"ALL",value:111.5,name:"ليك ألباني (ألبانيا)"},
+{code:"AMD",value:387,name:"الدрам الأرميني (أرمينيا)"},
+{code:"ANG",value:1.8,name:"غيلدر أنتيلي (أنتيل)"},
+{code:"AUD",value:1.5,name:"الدولار الأسترالي (أستراليا)"},
+{code:"AZN",value:1.7,name:"المانات الأذربيجاني (أذربيجان)"},
+{code:"BAM",value:1.8,name:"مارك بوسني (البوسنة والهرسك)"},
+{code:"BBD",value:2,name:"الدولار البربادوسي (باربادوس)"},
+{code:"BDT",value:108,name:"التكا البنغلاديشي (بنغلاديش)"},
+{code:"BHD",value:0.38,name:"الدينار البحريني (البحرين)"},
+{code:"BMD",value:1,name:"الدولار برمودا (برمودا)"},
+{code:"BRL",value:5.2,name:"الريال البرازيلي (البرازيل)"},
+{code:"CAD",value:1.36,name:"الدولار الكندي (كندا)"},
+{code:"CHF",value:0.89,name:"الفرنك السويسري (سويسرا)"},
+{code:"CLP",value:800,name:"البيزو التشيلي (تشيلي)"},
+{code:"CNY",value:6.96,name:"اليوان الصيني (الصين)"},
+{code:"COP",value:5020,name:"البيزو الكولومبي (كولومبيا)"},
+{code:"CZK",value:23,name:"الكورونا التشيكي (التشيك)"},
+{code:"DKK",value:6.9,name:"الكورونا الدنماركي (الدنمارك)"},
+{code:"DOP",value:57.5,name:"البيزو الدومينيكي (دومينيكا)"},
+{code:"EGP",value:30.9,name:"الجنيه المصري (مصر)"},
+{code:"EUR",value:51.1,name:"اليورو (الاتحاد الأوروبي)"},
+{code:"ETB",value:1,name:"البير الإثيوبي (إثيوبيا)"},
+{code:"GBP",value:45.0,name:"الجنيه الإسترليني (المملكة المتحدة)"},
+{code:"GHS",value:27,name:"السيدي الغاني (غانا)"},
+{code:"HKD",value:7.8,name:"الدولار الهونغ كونغي (هونغ كونغ)"},
+{code:"HRK",value:7.6,name:"الكونا الكرواتي (كرواتيا)"},
+{code:"HUF",value:365,name:"الفورنت المجري (المجر)"},
+{code:"IDR",value:15700,name:"الروبية الإندونيسية (إندونيسيا)"},
+{code:"INR",value:83.5,name:"الروبية الهندية (الهند)"},
+{code:"ISK",value:136,name:"الكرونا الأيسلندية (آيسلندا)"},
+{code:"JMD",value:154,name:"الدولار الجامايكي (جامايكا)"},
+{code:"JPY",value:0.38,name:"الين الياباني (اليابان)"},
+{code:"KES",value:150,name:"الشيلينغ الكيني (كينيا)"},
+{code:"KRW",value:1360,name:"الوون الكوري الجنوبي (كوريا الجنوبية)"},
+{code:"KWD",value:0.31,name:"الدينار الكويتي (الكويت)"},
+{code:"LKR",value:323,name:"الروبية السيريلانكية (سريلانكا)"},
+{code:"MAD",value:10,name:"الدرهم المغربي (المغرب)"},
+{code:"MXN",value:55,name:"البيزو المكسيكي (المكسيك)"},
+{code:"MYR",value:4.7,name:"الرينغيت الماليزي (ماليزيا)"},
+{code:"NOK",value:10.2,name:"الكرونا النرويجية (النرويج)"},
+{code:"NZD",value:1.64,name:"الدولار النيوزيلندي (نيوزيلندا)"},
+{code:"PHP",value:55,name:"البيزو الفلبيني (الفلبين)"},
+{code:"PKR",value:288,name:"الروبية الباكستانية (باكستان)"},
+{code:"QAR",value:3.64,name:"الريال القطري (قطر)"},
+{code:"RON",value:4.5,name:"الليو الروماني (رومانيا)"},
+{code:"RUB",value:93,name:"الروبل الروسي (روسيا)"},
+{code:"SAR",value:3.75,name:"الريال السعودي (السعودية)"},
+{code:"SEK",value:11.2,name:"الكرونا السويدية (السويد)"},
+{code:"SGD",value:1.35,name:"الدولار السنغافوري (سنغافورة)"},
+{code:"THB",value:35,name:"البات التايلاندي (تايلاند)"},
+{code:"TRY",value:29.5,name:"الليرة التركية (تركيا)"},
+{code:"USD",value:55.5,name:"الدولار الأمريكي (الولايات المتحدة)"},
+{code:"ZAR",value:18.5,name:"الراند الجنوب أفريقي (جنوب أفريقيا)"},
+];
+
+let rates = [...defaultRates];
+rates.sort((a,b)=>a.code.localeCompare(b.code));
+
+// تعبئة القوائم
+let from=document.getElementById("from");
+let to=document.getElementById("to");
+function fillCurrencySelect(){
+  from.innerHTML="";
+  to.innerHTML="";
+  rates.forEach(r=>{
+    from.innerHTML+=`<option value="${r.code}">${r.code} - ${r.name}</option>`;
+    to.innerHTML+=`<option value="${r.code}">${r.code} - ${r.name}</option>`;
+  });
+}
+fillCurrencySelect();
+
+// تحويل العملات
+function convert(){
+ let a=parseFloat(document.getElementById("amount").value);
+ let f=from.value;
+ let t=to.value;
+ if(isNaN(a)||a<=0){screen.innerText="أدخل مبلغ صحيح"; return;}
+ let rateF=rates.find(r=>r.code===f).value;
+ let rateT=rates.find(r=>r.code===t).value;
+ let result=(a*rateF)/rateT;
+ screen.innerText=result.toFixed(2);
+}
+
+// تحديث العملات من الإنترنت (زر التحديث)
+async function updateRates(){
+  let msg=document.createElement("div");
+  msg.style.position="absolute";
+  msg.style.top="10px";
+  msg.style.left="50%";
+  msg.style.transform="translateX(-50%)";
+  msg.style.background="#ff9500";
+  msg.style.color="#fff";
+  msg.style.padding="10px 20px";
+  msg.style.borderRadius="10px";
+  msg.style.zIndex="100";
+  document.body.appendChild(msg);
+
+  try{
+    let res = await fetch("https://api.exchangerate.host/latest?base=USD");
+    let data = await res.json();
+    let newRates=[];
+    for(let r of rates){
+      if(data.rates[r.code]) newRates.push({code:r.code,value:data.rates[r.code],name:r.name});
+      else newRates.push(r); // لو العملة غير موجودة خليها ثابتة
+    }
+    rates=newRates;
+    fillCurrencySelect();
+    msg.innerText="✅ تم تحديث أسعار العملات من الإنترنت";
+  }catch(e){
+    msg.innerText="❌ لا يوجد اتصال، سيتم استخدام الأسعار السابقة";
+  }
+
+  setTimeout(()=>{msg.remove();},2000);
+}
+
+// ضبط الوضع الأولي
+changeMode();
+</script>
+</body>
+</html>
